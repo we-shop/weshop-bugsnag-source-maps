@@ -1,26 +1,21 @@
-# @bugsnag/source-maps
+# @weshop/bugsnag-source-maps
+
+**WeShop's private fork of @bugsnag/source-maps**
+
+This is a private fork of the original Bugsnag source maps CLI and library, customized for WeShop's needs.
 
 ## Installation
 
-You can install @bugsnag/source-maps locally to your project:
+Install from WeShop's private registry:
 
 ```sh
-npm install --save-dev @bugsnag/source-maps
-yarn add --dev @bugsnag/source-maps
+npm install --save-dev @weshop/bugsnag-source-maps --registry <your-private-registry>
 ```
 
-You can then run the CLI using the convenience tools for each package manager:
+You can then run the CLI using:
 
 ```sh
 npx bugsnag-source-maps [...args]
-yarn run bugsnag-source-maps [...args]
-```
-
-Or you can install the `bugsnag-source-maps` CLI tool globally on your system:
-
-```sh
-npm install --global @bugsnag/source-maps
-yarn global add @bugsnag/source-maps
 ```
 
 ## System requirements
@@ -67,6 +62,72 @@ bugsnag-source-maps upload-browser \
 ## Contributing
 
 Most updates to this repo will be made by Bugsnag employees. We are unable to accommodate significant external PRs such as features additions or any large refactoring, however minor fixes are welcome. See [contributing](CONTRIBUTING.md) for more information.
+
+## Fork Maintenance
+
+### Merging Upstream Changes
+
+To merge changes from the original Bugsnag repository:
+
+1. **Add upstream remote** (if not already added):
+   ```sh
+   git remote add upstream https://github.com/bugsnag/bugsnag-source-maps.git
+   ```
+
+2. **Fetch upstream changes**:
+   ```sh
+   git fetch upstream
+   ```
+
+3. **Merge upstream changes**:
+   ```sh
+   git checkout next  # or your main branch
+   git merge upstream/next
+   ```
+
+4. **Resolve any conflicts** and test thoroughly
+
+5. **Update version** following the WeShop versioning pattern:
+   ```sh
+   # If upstream released 2.4.0, update to:
+   npm version 2.4.0-weshop.1
+   ```
+
+### WeShop-Specific Versioning
+
+This fork uses semver pre-release identifiers to maintain compatibility with upstream:
+
+- **Base version format**: `X.Y.Z-weshop.N`
+- **Example progression**: `2.3.2-weshop.1` → `2.3.2-weshop.2` → `2.3.3-weshop.1`
+
+#### Version Bump Commands
+
+```sh
+# WeShop-specific patch (bug fixes, small changes)
+npm version prerelease --preid=weshop
+
+# After merging upstream patch release (e.g., 2.3.3)
+npm version 2.3.3-weshop.1
+
+# After merging upstream minor release (e.g., 2.4.0)
+npm version 2.4.0-weshop.1
+
+# After merging upstream major release (e.g., 3.0.0)
+npm version 3.0.0-weshop.1
+```
+
+#### Publishing
+
+```sh
+# Build and publish to private registry
+npm run publish:private <your-registry-url>
+```
+
+### Upstream Tracking
+
+- **Original repository**: https://github.com/bugsnag/bugsnag-source-maps
+- **Current upstream base**: v2.3.2
+- **WeShop modifications**: Private package configuration, custom publishing setup
 
 ## License
 

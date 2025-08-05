@@ -1,6 +1,22 @@
 # Changelog
 
-## TBD
+## 2.3.2-weshop.1 (2025-01-08)
+
+### Changed
+
+- **BREAKING**: Fork from original @bugsnag/source-maps to @weshop/bugsnag-source-maps
+- Make package private to prevent accidental public publishing
+- Add custom publishing script for private registry deployment
+- Update versioning to use semver pre-release format (X.Y.Z-weshop.N)
+- Add comprehensive fork maintenance documentation
+
+### Infrastructure
+
+- Based on upstream version 2.3.2
+- All original functionality preserved
+- Added WeShop-specific build and deployment configuration
+
+## TBD (Upstream)
 
 ### Fixed
 

@@ -1,7 +1,7 @@
 {
-  "name": "@bugsnag/source-maps",
-  "version": "2.3.2",
-  "description": "CLI and JS library for uploading source maps to Bugsnag",
+  "name": "@weshop/bugsnag-source-maps",
+  "version": "2.3.2-weshop.1",
+  "description": "A fork of the original CLI and JS library for uploading source maps to Bugsnag",
   "main": "dist/index.js",
   "homepage": "https://github.com/bugsnag/bugsnag-source-maps",
   "bugs": {
@@ -14,15 +14,14 @@
   "bin": {
     "bugsnag-source-maps": "bin/cli"
   },
-  "publishConfig": {
-    "access": "public"
-  },
+  "private": true,
   "scripts": {
     "clean": "rm -fr dist",
     "build": "npm run clean && tsc -p tsconfig.build.json",
     "lint": "eslint . --ext .js,.ts",
     "test": "tsc --noEmit && npm run lint && jest",
-    "preversion": "npm run build"
+    "preversion": "npm run build",
+    "publish:private": "npm run build && npm publish --registry"
   },
   "files": [
     "bin",
