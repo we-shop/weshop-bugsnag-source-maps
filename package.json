@@ -14,13 +14,13 @@
   "bin": {
     "bugsnag-source-maps": "bin/cli"
   },
-  "private": true,
   "scripts": {
     "clean": "rm -fr dist",
     "build": "npm run clean && tsc -p tsconfig.build.json",
     "lint": "eslint . --ext .js,.ts",
     "test": "tsc --noEmit && npm run lint && jest",
     "preversion": "npm run build",
+    "prepublishOnly": "node -e \"const registry = process.env.npm_config_registry || 'https://registry.npmjs.org/'; if (registry.includes('registry.npmjs.org')) { console.error('ERROR: Cannot publish to public NPM registry. Use publish:private with --registry argument.'); process.exit(1); }\"",
     "publish:private": "npm run build && npm publish --registry"
   },
   "files": [
