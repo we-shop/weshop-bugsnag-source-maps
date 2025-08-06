@@ -1,6 +1,12 @@
 # Changelog
 
-## 2.3.2-weshop.1 (2025-01-08)
+## 2.3.2-weshop.2 (2025-06-08)
+
+### Added
+
+- NodeUploader: parallel upload with concurrency control and fail-fast behaviour.
+
+## 2.3.2-weshop.1 (2025-05-08)
 
 ### Changed
 

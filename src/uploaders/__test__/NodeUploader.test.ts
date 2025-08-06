@@ -1,4 +1,4 @@
-import { uploadOne, uploadMultiple } from '../NodeUploader'
+import { uploadMultiple, uploadOne } from '../NodeUploader'
 import request from '../../Request'
 import { NetworkError, NetworkErrorCode } from '../../NetworkError'
 import path from 'path'
@@ -17,7 +17,7 @@ const mockLogger = {
 }
 
 test('uploadOne(): dispatches a request with the correct params', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockResolvedValue()
   await uploadOne({
     apiKey: '123',
@@ -43,7 +43,7 @@ test('uploadOne(): dispatches a request with the correct params', async () => {
 })
 
 test('uploadOne(): dispatches a request with the correct params and detected appVersion', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockResolvedValue()
   await uploadOne({
     apiKey: '123',
@@ -69,7 +69,7 @@ test('uploadOne(): dispatches a request with the correct params and detected app
 })
 
 test('uploadOne(): fails when unable to detect appVersion', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   try {
     await uploadOne({
       apiKey: '123',
@@ -88,7 +88,7 @@ test('uploadOne(): fails when unable to detect appVersion', async () => {
 })
 
 test('uploadOne(): failure (unexpected network error)', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   const err = new NetworkError('misc upload error')
   err.cause = new Error('network error')
   mockedRequest.mockRejectedValue(err)
@@ -109,7 +109,7 @@ test('uploadOne(): failure (unexpected network error)', async () => {
 })
 
 test('uploadOne(): failure (source map not found)', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockRejectedValue(new Error('network error'))
   try {
     await uploadOne({
@@ -129,7 +129,7 @@ test('uploadOne(): failure (source map not found)', async () => {
 
 
 test('uploadOne(): failure (bundle not found)', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockRejectedValue(new Error('network error'))
   try {
     await uploadOne({
@@ -148,7 +148,7 @@ test('uploadOne(): failure (bundle not found)', async () => {
 })
 
 test('uploadOne(): failure (sourcemap is invalid json)', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   try {
     await uploadOne({
       apiKey: '123',
@@ -166,7 +166,7 @@ test('uploadOne(): failure (sourcemap is invalid json)', async () => {
 })
 
 test('uploadOne(): custom endpoint (origin only)', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockResolvedValue()
   await uploadOne({
     endpoint: 'https://bugsnag.my-company.com',
@@ -191,7 +191,7 @@ test('uploadOne(): custom endpoint (origin only)', async () => {
 })
 
 test('uploadOne(): custom endpoint (absolute)', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockResolvedValue()
   await uploadOne({
     endpoint: 'https://bugsnag.my-company.com/source-map-custom',
@@ -216,7 +216,7 @@ test('uploadOne(): custom endpoint (absolute)', async () => {
 })
 
 test('uploadOne(): custom endpoint (invalid URL)', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   try {
     await uploadOne({
       endpoint: 'hljsdf',
@@ -235,7 +235,7 @@ test('uploadOne(): custom endpoint (invalid URL)', async () => {
 })
 
 test('uploadOne(): codeBundleId', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockResolvedValue()
   await uploadOne({
     apiKey: '123',
@@ -261,7 +261,7 @@ test('uploadOne(): codeBundleId', async () => {
 })
 
 test('uploadMultiple(): success', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockResolvedValue()
   await uploadMultiple({
     apiKey: '123',
@@ -331,7 +331,7 @@ test('uploadMultiple(): success', async () => {
 })
 
 test('uploadMultiple(): success with detected appVersion', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockResolvedValue()
   await uploadMultiple({
     apiKey: '123',
@@ -420,7 +420,7 @@ test('uploadMultiple(): success with detected appVersion', async () => {
 })
 
 test('uploadMultiple(): success with codeBundleId', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockResolvedValue()
   await uploadMultiple({
     apiKey: '123',
@@ -438,7 +438,7 @@ test('uploadMultiple(): success with codeBundleId', async () => {
   )
   expect(mockedRequest).toHaveBeenCalledWith(
     'https://upload.bugsnag.com/sourcemap',
-    expect.objectContaining({ codeBundleId: 'r00012'}),
+    expect.objectContaining({ codeBundleId: 'r00012' }),
     {},
     { idleTimeout: undefined }
   )
@@ -457,7 +457,7 @@ test('uploadMultiple(): success with codeBundleId', async () => {
 })
 
 test('uploadMultiple(): success using absolute path for "directory"', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockResolvedValue()
   await uploadMultiple({
     apiKey: '123',
@@ -527,7 +527,7 @@ test('uploadMultiple(): success using absolute path for "directory"', async () =
 })
 
 test('uploadMultiple(): no source maps', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   const err = new NetworkError('timeout')
   err.code = NetworkErrorCode.TIMEOUT
   mockedRequest.mockRejectedValue(err)
@@ -541,7 +541,7 @@ test('uploadMultiple(): no source maps', async () => {
 })
 
 test('uploadMultiple(): no bundles', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   mockedRequest.mockResolvedValue()
   await uploadMultiple({
     apiKey: '123',
@@ -554,7 +554,7 @@ test('uploadMultiple(): no bundles', async () => {
 })
 
 test('uploadMultiple(): invalid source map', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   try {
     await uploadMultiple({
       apiKey: '123',
@@ -571,7 +571,7 @@ test('uploadMultiple(): invalid source map', async () => {
 })
 
 test('uploadMultiple(): fails when unable to detect appVersion', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   try {
     await uploadMultiple({
       apiKey: '123',
@@ -589,7 +589,7 @@ test('uploadMultiple(): fails when unable to detect appVersion', async () => {
 })
 
 test('uploadMultiple(): failure (timeout)', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   const err = new NetworkError('timeout')
   err.code = NetworkErrorCode.TIMEOUT
   mockedRequest.mockRejectedValue(err)
@@ -609,7 +609,7 @@ test('uploadMultiple(): failure (timeout)', async () => {
 })
 
 test('uploadMultiple(): failure (connection error)', async () => {
-  const mockedRequest  = request as jest.MockedFunction<typeof request>
+  const mockedRequest = request as jest.MockedFunction<typeof request>
   const err = new NetworkError('misc error')
   err.code = NetworkErrorCode.UNKNOWN
   err.cause = new Error('the cause')
@@ -663,5 +663,256 @@ describe('input validation errors (when using as a JS library', () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     return expect(uploadMultiple(input)).rejects.toThrowError(expectedError)
+  })
+
+  describe('concurrency control', () => {
+
+    test('uploadMultiple(): respects concurrency limit', async () => {
+      const mockedRequest = request as jest.MockedFunction<typeof request>
+      let activeRequests = 0
+      let maxConcurrentRequests = 0
+
+      mockedRequest.mockImplementation(() => {
+        activeRequests++
+        maxConcurrentRequests = Math.max(maxConcurrentRequests, activeRequests)
+
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            activeRequests--
+            resolve()
+          }, 50) // Simulate async work
+        })
+      })
+
+      await uploadMultiple({
+        apiKey: '123',
+        directory: 'dist',
+        projectRoot: path.join(__dirname, 'fixtures/f'), // has 3 source maps
+        concurrency: 2,
+        logger: mockLogger
+      })
+
+      expect(maxConcurrentRequests).toBe(2)
+      expect(mockedRequest).toHaveBeenCalledTimes(3)
+    })
+
+    test('uploadMultiple(): processes all items even with some failures', async () => {
+      const mockedRequest = request as jest.MockedFunction<typeof request>
+      let callCount = 0
+
+      mockedRequest.mockImplementation(() => {
+        callCount++
+        if (callCount === 2) {
+          // Fail the second request
+          const err = new NetworkError('simulated error')
+          return Promise.reject(err)
+        }
+        return Promise.resolve()
+      })
+
+      try {
+        await uploadMultiple({
+          apiKey: '123',
+          directory: 'dist',
+          projectRoot: path.join(__dirname, 'fixtures/f'), // has 3 source maps
+          concurrency: 2,
+          logger: mockLogger
+        })
+      } catch (e) {
+        // Expected to fail
+      }
+
+      // Should have attempted all 3 uploads despite one failure
+      expect(mockedRequest).toHaveBeenCalledTimes(3)
+    })
+
+    test('uploadMultiple(): handles concurrency higher than item count', async () => {
+      const mockedRequest = request as jest.MockedFunction<typeof request>
+      let activeRequests = 0
+      let maxConcurrentRequests = 0
+
+      mockedRequest.mockImplementation(() => {
+        activeRequests++
+        maxConcurrentRequests = Math.max(maxConcurrentRequests, activeRequests)
+
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            activeRequests--
+            resolve()
+          }, 50)
+        })
+      })
+
+      await uploadMultiple({
+        apiKey: '123',
+        directory: 'dist',
+        projectRoot: path.join(__dirname, 'fixtures/f'), // has 3 source maps
+        concurrency: 10, // Higher than the 3 source maps
+        logger: mockLogger
+      })
+
+      // Should never exceed the actual number of items (3)
+      expect(maxConcurrentRequests).toBe(3)
+      expect(mockedRequest).toHaveBeenCalledTimes(3)
+    })
+
+    test('uploadMultiple(): maintains constant concurrency utilization', async () => {
+      const mockedRequest = request as jest.MockedFunction<typeof request>
+      const requestTimes: number[] = []
+      const completionTimes: number[] = []
+      const startTime = Date.now()
+
+      mockedRequest.mockImplementation(() => {
+        requestTimes.push(Date.now() - startTime)
+
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            completionTimes.push(Date.now() - startTime)
+            resolve()
+          }, Math.random() * 100 + 50) // Random duration 50-150ms
+        })
+      })
+
+      await uploadMultiple({
+        apiKey: '123',
+        directory: 'dist',
+        projectRoot: path.join(__dirname, 'fixtures/g'), // Larger fixture with more files
+        concurrency: 2,
+        logger: mockLogger
+      })
+
+      // With proper concurrency pool, new requests should start as soon as slots become available
+      // This means we should have overlapping request/completion patterns
+      expect(mockedRequest).toHaveBeenCalledTimes(3)
+
+      // The first 2 requests should start immediately (within a few ms)
+      expect(requestTimes[0]).toBeLessThan(10)
+      expect(requestTimes[1]).toBeLessThan(10)
+
+      // The third request should start after one of the first two completes
+      // It should not wait for both to complete (that would be batch behavior)
+      const thirdRequestTime = requestTimes[2]
+      const firstCompletionTime = Math.min(completionTimes[0], completionTimes[1])
+      expect(thirdRequestTime).toBeGreaterThanOrEqual(firstCompletionTime - 10) // Allow some timing tolerance
+    })
+
+    test('uploadMultiple(): handles empty directory gracefully', async () => {
+      const mockedRequest = request as jest.MockedFunction<typeof request>
+
+      await uploadMultiple({
+        apiKey: '123',
+        directory: 'empty',
+        projectRoot: path.join(__dirname, 'fixtures/a'), // Directory with no .map files
+        concurrency: 5,
+        logger: mockLogger
+      })
+
+      expect(mockedRequest).not.toHaveBeenCalled()
+      expect(mockLogger.warn).toHaveBeenCalledWith('No source maps found.')
+    })
+
+    test('uploadMultiple(): concurrency limit 1 processes files sequentially', async () => {
+      const mockedRequest = request as jest.MockedFunction<typeof request>
+      let activeRequests = 0
+      let maxConcurrentRequests = 0
+      const requestOrder: number[] = []
+      const completionOrder: number[] = []
+      let requestCounter = 0
+
+      mockedRequest.mockImplementation(() => {
+        const currentRequestId = ++requestCounter
+        requestOrder.push(currentRequestId)
+        activeRequests++
+        maxConcurrentRequests = Math.max(maxConcurrentRequests, activeRequests)
+
+        return new Promise((resolve) => {
+          // Simulate async work with different durations to ensure order matters
+          const delay = currentRequestId === 1 ? 100 : 50
+          setTimeout(() => {
+            activeRequests--
+            completionOrder.push(currentRequestId)
+            resolve()
+          }, delay)
+        })
+      })
+
+      await uploadMultiple({
+        apiKey: '123',
+        directory: 'dist',
+        projectRoot: path.join(__dirname, 'fixtures/f'), // has 3 source maps
+        concurrency: 1,
+        logger: mockLogger
+      })
+
+      // With concurrency 1, should never have more than 1 active request
+      expect(maxConcurrentRequests).toBe(1)
+      expect(mockedRequest).toHaveBeenCalledTimes(3)
+
+      // Requests should start in order: 1, 2, 3
+      expect(requestOrder).toEqual([ 1, 2, 3 ])
+
+      // With concurrency 1, completions should be strictly sequential
+      // First request takes 100ms, others take 50ms, but they can't overlap
+      expect(completionOrder).toEqual([ 1, 2, 3 ])
+    })
+
+    test('uploadMultiple(): fails fast on unrecoverable errors (INVALID_API_KEY)', async () => {
+      const mockedRequest = request as jest.MockedFunction<typeof request>
+      let callCount = 0
+      
+      mockedRequest.mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          // First request fails with INVALID_API_KEY (unrecoverable)
+          const err = new NetworkError('Invalid API key')
+          err.code = NetworkErrorCode.INVALID_API_KEY
+          return Promise.reject(err)
+        }
+        // Other requests should never be called due to fail-fast
+        return Promise.resolve()
+      })
+
+      try {
+        await uploadMultiple({
+          apiKey: 'invalid-key',
+          directory: 'dist',
+          projectRoot: path.join(__dirname, 'fixtures/f'), // has 3 source maps
+          concurrency: 5,
+          logger: mockLogger
+        })
+        // Should not reach here
+        expect(false).toBe(true)
+      } catch (e) {
+        expect(e).toBeTruthy()
+        expect((e as NetworkError).code).toBe(NetworkErrorCode.INVALID_API_KEY)
+        
+        // Should stop immediately after first failure, not process remaining files
+        expect(callCount).toBe(1) // Only first request attempted
+      }
+    })
+
+    test('uploadMultiple(): fails fast on unrecoverable errors (invalid endpoint)', async () => {
+      const mockedRequest = request as jest.MockedFunction<typeof request>
+      
+      try {
+        await uploadMultiple({
+          apiKey: '123',
+          directory: 'dist',
+          projectRoot: path.join(__dirname, 'fixtures/f'),
+          endpoint: 'invalid-url-format', // Invalid URL causes unrecoverable error
+          concurrency: 5,
+          logger: mockLogger
+        })
+        // Should not reach here
+        expect(false).toBe(true)
+      } catch (e) {
+        expect(e).toBeTruthy()
+        expect(e.message).toContain('Invalid URL')
+        
+        // Should fail before any requests are made due to invalid endpoint
+        expect(mockedRequest).not.toHaveBeenCalled()
+      }
+    })
+
   })
 })

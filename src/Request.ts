@@ -7,6 +7,7 @@ import { NetworkError, NetworkErrorCode } from './NetworkError'
 import File from './File'
 
 export const enum PayloadType { Browser, ReactNative, Node }
+
 type Payload = BrowserPayload | ReactNativePayload | NodePayload
 
 type BrowserPayload = JsPayload
@@ -42,8 +43,14 @@ interface RequestOptions {
 }
 
 const MAX_ATTEMPTS = 5
-const RETRY_INTERVAL_MS = parseInt(process.env.BUGSNAG_RETRY_INTERVAL_MS as string) || 1000
+const BASE_RETRY_INTERVAL_MS = parseInt(process.env.BUGSNAG_RETRY_INTERVAL_MS as string) || 1000
 const DEFAULT_TIMEOUT_MS = parseInt(process.env.BUGSNAG_TIMEOUT_MS as string) || 60000
+
+function calculateBackoffDelay (attempt: number, baseDelayMs: number): number {
+  const exponentialDelay = baseDelayMs * Math.pow(2, attempt - 1)
+  const jitter = Math.random() * 0.1 * exponentialDelay
+  return Math.min(exponentialDelay + jitter, 30000) // cap at 30 seconds
+}
 
 export default async function request (
   endpoint: string,
@@ -58,7 +65,8 @@ export default async function request (
       await send(endpoint, payload, requestOpts, options)
     } catch (err) {
       if (err && err.isRetryable !== false && attempts < MAX_ATTEMPTS) {
-        await new Promise((resolve) => setTimeout(resolve, RETRY_INTERVAL_MS))
+        const delay = calculateBackoffDelay(attempts, BASE_RETRY_INTERVAL_MS)
+        await new Promise((resolve) => setTimeout(resolve, delay))
         return await go()
       }
       throw err
@@ -81,18 +89,18 @@ function createFormData (payload: Payload): FormData {
   }
 }
 
-function appendJsFormData(formData: FormData, payload: BrowserPayload | NodePayload): FormData {
+function appendJsFormData (formData: FormData, payload: BrowserPayload | NodePayload): FormData {
   if (payload.appVersion) formData.append('appVersion', payload.appVersion)
   if (payload.codeBundleId) formData.append('codeBundleId', payload.codeBundleId)
   formData.append('minifiedUrl', payload.minifiedUrl)
-  formData.append('sourceMap', payload.sourceMap.data, { filepath: payload.sourceMap.filepath})
-  if (payload.minifiedFile) formData.append('minifiedFile', payload.minifiedFile.data, { filepath: payload.minifiedFile.filepath})
+  formData.append('sourceMap', payload.sourceMap.data, { filepath: payload.sourceMap.filepath })
+  if (payload.minifiedFile) formData.append('minifiedFile', payload.minifiedFile.data, { filepath: payload.minifiedFile.filepath })
   if (payload.overwrite) formData.append('overwrite', payload.overwrite.toString())
 
   return formData
 }
 
-function appendReactNativeFormData(formData: FormData, payload: ReactNativePayload): FormData {
+function appendReactNativeFormData (formData: FormData, payload: ReactNativePayload): FormData {
   formData.append('platform', payload.platform)
   formData.append('overwrite', payload.overwrite.toString())
   formData.append('dev', payload.dev.toString())
@@ -180,10 +188,10 @@ export function isRetryable (status?: number): boolean {
         408, // timeout
         429 // too many requests
       ].indexOf(status) !== -1)
-    )
+  )
 }
 
-export function fetch(endpoint: string, options: RequestOptions = {}): Promise<string> {
+export function fetch (endpoint: string, options: RequestOptions = {}): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const parsedUrl = url.parse(endpoint)
 
@@ -215,7 +223,7 @@ export function fetch(endpoint: string, options: RequestOptions = {}): Promise<s
   })
 }
 
-function addErrorHandler(req: http.ClientRequest, reject: (reason: NetworkError) => void): void {
+function addErrorHandler (req: http.ClientRequest, reject: (reason: NetworkError) => void): void {
   req.on('error', e => {
     const err = new NetworkError('Unknown connection error')
     err.cause = e
@@ -234,7 +242,7 @@ function addErrorHandler(req: http.ClientRequest, reject: (reason: NetworkError)
 
 const minutesToMilliseconds = (minutes: number): number => minutes * 60 * 1000
 
-function addTimeout(
+function addTimeout (
   req: http.ClientRequest,
   reject: (reason: NetworkError) => void,
   options: RequestOptions

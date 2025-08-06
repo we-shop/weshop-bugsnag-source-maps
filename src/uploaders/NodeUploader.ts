@@ -12,15 +12,157 @@ import readSourceMap from './lib/ReadSourceMap'
 import parseSourceMap from './lib/ParseSourceMap'
 import _detectAppVersion from './lib/DetectAppVersion'
 import {
-  validateRequiredStrings,
-  validateOptionalStrings,
   validateBooleans,
+  validateNoUnknownArgs,
   validateObjects,
-  validateNoUnknownArgs
+  validateOptionalStrings,
+  validateRequiredStrings
 } from './lib/InputValidators'
 
-import { DEFAULT_UPLOAD_ORIGIN, buildEndpointUrl } from './lib/EndpointUrl'
+import { buildEndpointUrl, DEFAULT_UPLOAD_ORIGIN } from './lib/EndpointUrl'
+import { NetworkError, NetworkErrorCode } from '../NetworkError'
+
 const UPLOAD_PATH = '/sourcemap'
+
+function isUnrecoverableError (error: Error): boolean {
+  // App version detection failures - affects all uploads
+  if (error.message.includes('Unable to automatically detect app version')) {
+    return true
+  }
+
+  // Network errors that affect all uploads
+  if (error instanceof NetworkError) {
+    switch (error.code) {
+      case NetworkErrorCode.INVALID_API_KEY:
+        return true // Wrong API key affects all uploads
+      default:
+        return false
+    }
+  }
+
+  // Configuration errors that affect the entire upload session
+  return error.message.includes('Invalid URL:');
+}
+
+async function uploadSingleFile (
+  sourceMap: string,
+  absoluteSearchPath: string,
+  url: string,
+  options: {
+    apiKey: string
+    appVersion?: string
+    codeBundleId?: string
+    overwrite: boolean
+    projectRoot: string
+    requestOpts: http.RequestOptions
+    idleTimeout?: number
+    logger: Logger
+  }
+): Promise<{ sourceMap: string, success: boolean, error?: Error }> {
+  const { apiKey, appVersion, codeBundleId, overwrite, projectRoot, requestOpts, idleTimeout, logger } = options
+
+  try {
+    const [ sourceMapContent, fullSourceMapPath ] = await readSourceMap(sourceMap, absoluteSearchPath, logger)
+    const sourceMapJson = parseSourceMap(sourceMapContent, fullSourceMapPath, logger)
+
+    const bundlePath = sourceMap.replace(/\.map$/, '')
+    let bundleContent, fullBundlePath
+    try {
+      [ bundleContent, fullBundlePath ] = await readBundleContent(bundlePath, absoluteSearchPath, sourceMap, logger)
+    } catch (e) {
+      // ignore error – it's already logged out
+    }
+
+    const transformedSourceMap = await applyTransformations(fullSourceMapPath, sourceMapJson, projectRoot, logger)
+
+    const start = new Date().getTime()
+    await request(url, {
+      type: PayloadType.Node,
+      apiKey,
+      appVersion,
+      codeBundleId,
+      minifiedUrl: path.relative(projectRoot, path.resolve(absoluteSearchPath, bundlePath)).replace(/\\/g, '/'),
+      minifiedFile: (bundleContent && fullBundlePath) ? new File(fullBundlePath, bundleContent) : undefined,
+      sourceMap: new File(fullSourceMapPath, JSON.stringify(transformedSourceMap)),
+      overwrite: overwrite
+    }, requestOpts, { idleTimeout })
+
+    const uploadedFiles = (bundleContent && fullBundlePath) ? `${sourceMap} and ${bundlePath}` : sourceMap
+    logger.success(`Success, uploaded ${uploadedFiles} to ${url} in ${(new Date()).getTime() - start}ms`)
+
+    return { sourceMap, success: true }
+  } catch (error) {
+    if (error.cause) {
+      logger.error(formatErrorLog(error), error, error.cause)
+    } else {
+      logger.error(formatErrorLog(error), error)
+    }
+    return { sourceMap, success: false, error }
+  }
+}
+
+async function processWithConcurrencyPool<T, R> (
+  items: T[],
+  processor: (item: T) => Promise<R>,
+  concurrency: number
+): Promise<R[]> {
+  return new Promise((resolve, reject) => {
+    const results: R[] = []
+    let currentIndex = 0
+    let activeCount = 0
+    let completedCount = 0
+    let shouldStop = false
+
+    function processNext (): void {
+      // Fill up the concurrency pool
+      while (activeCount < concurrency && currentIndex < items.length && !shouldStop) {
+        const itemIndex = currentIndex
+        currentIndex++
+        activeCount++
+
+        processor(items[itemIndex])
+          .then((result) => {
+            results[itemIndex] = result
+            
+            // Check for unrecoverable errors in results
+            const uploadResult = result as { success?: boolean; error?: Error }
+            if (!uploadResult?.success && uploadResult?.error && isUnrecoverableError(uploadResult.error)) {
+              shouldStop = true
+              // Reject immediately with the unrecoverable error
+              reject(uploadResult.error)
+              return
+            }
+          })
+          .catch((error) => {
+            // For failed uploads, we still want to store the error result
+            // The processor should handle errors and return success/failure info
+            results[itemIndex] = error
+          })
+          .finally(() => {
+            activeCount--
+            completedCount++
+
+            // Check if we're done
+            if (completedCount >= items.length) {
+              resolve(results)
+            } else if (!shouldStop) {
+              // Process more items
+              processNext()
+            }
+          })
+      }
+    }
+
+    // Handle empty array case
+    if (items.length === 0) {
+      resolve(results)
+      return
+    }
+
+    // Start processing
+    processNext()
+  })
+}
 
 interface UploadSingleOpts {
   apiKey: string
@@ -136,6 +278,7 @@ interface UploadMultipleOpts {
   requestOpts?: http.RequestOptions
   logger?: Logger
   idleTimeout?: number
+  concurrency?: number
 }
 
 function validateMultipleOpts (opts: Record<string, unknown>, unknownArgs: Record<string, unknown>) {
@@ -158,6 +301,7 @@ export async function uploadMultiple ({
   detectAppVersion = false,
   requestOpts = {},
   logger = noopLogger,
+  concurrency = 5,
   ...unknownArgs
 }: UploadMultipleOpts): Promise<void> {
   validateMultipleOpts({
@@ -173,9 +317,9 @@ export async function uploadMultiple ({
     logger
   }, unknownArgs as Record<string, unknown>)
 
-  logger.info(`Preparing upload of node source maps for "${directory}"`)
+  logger.info(`Preparing upload of node source maps for "${directory}" (concurrency: ${concurrency})`)
 
-  let url
+  let url: string
   try {
     url = buildEndpointUrl(endpoint, UPLOAD_PATH)
   } catch (e) {
@@ -209,48 +353,44 @@ export async function uploadMultiple ({
     }
   }
 
-  let n = 0
-  for (const sourceMap of sourceMaps) {
-    n++
-    logger.info(`${n} of ${sourceMaps.length}`)
+  const uploadOptions = {
+    apiKey,
+    appVersion,
+    codeBundleId,
+    overwrite,
+    projectRoot,
+    requestOpts,
+    idleTimeout,
+    logger
+  }
 
-    const [ sourceMapContent, fullSourceMapPath ] = await readSourceMap(sourceMap, absoluteSearchPath, logger)
-    const sourceMapJson = parseSourceMap(sourceMapContent, fullSourceMapPath, logger)
+  logger.info(`Starting parallel upload of ${sourceMaps.length} source map(s)`)
+  const startTime = new Date().getTime()
 
-    const bundlePath = sourceMap.replace(/\.map$/, '')
-    let bundleContent, fullBundlePath
-    try {
-      [ bundleContent, fullBundlePath ] = await readBundleContent(bundlePath, absoluteSearchPath, sourceMap, logger)
-    } catch (e) {
-      // ignore error – it's already logged out
+  const results = await processWithConcurrencyPool(
+    sourceMaps,
+    (sourceMap) => uploadSingleFile(sourceMap, absoluteSearchPath, url, uploadOptions),
+    concurrency
+  )
+
+  const successful = results.filter(r => r.success)
+  const failed = results.filter(r => !r.success)
+
+  const totalTime = new Date().getTime() - startTime
+  logger.info(`Upload completed in ${totalTime}ms. Success: ${successful.length}, Failed: ${failed.length}`)
+
+  if (failed.length > 0) {
+    logger.error(`Failed to upload ${failed.length} source map(s):`)
+    for (const result of failed) {
+      logger.error(`  - ${result.sourceMap}: ${result.error?.message ?? 'Unknown error'}`)
     }
 
-    const transformedSourceMap = await applyTransformations(fullSourceMapPath, sourceMapJson, projectRoot, logger)
-
-    logger.debug(`Initiating upload to "${url}"`)
-    const start = new Date().getTime()
-    try {
-      await request(url, {
-        type: PayloadType.Node,
-        apiKey,
-        appVersion,
-        codeBundleId,
-        minifiedUrl: path.relative(projectRoot, path.resolve(absoluteSearchPath, bundlePath)).replace(/\\/g, '/'),
-        minifiedFile: (bundleContent && fullBundlePath) ? new File(fullBundlePath, bundleContent) : undefined,
-        sourceMap: new File(fullSourceMapPath, JSON.stringify(transformedSourceMap)),
-        overwrite: overwrite
-      }, requestOpts, { idleTimeout })
-
-      const uploadedFiles = (bundleContent && fullBundlePath) ? `${sourceMap} and ${bundlePath}` : sourceMap
-
-      logger.success(`Success, uploaded ${uploadedFiles} to ${url} in ${(new Date()).getTime() - start}ms`)
-    } catch (e) {
-      if (e.cause) {
-        logger.error(formatErrorLog(e), e, e.cause)
-      } else {
-        logger.error(formatErrorLog(e), e)
-      }
-      throw e
+    // With fail-fast logic, we only reach here for recoverable errors
+    // Preserve backward compatibility: throw original error for single file or uniform failures
+    if (sourceMaps.length === 1 || failed.length === sourceMaps.length) {
+      throw failed[0].error
     }
+
+    throw new Error(`Failed to upload ${failed.length} of ${sourceMaps.length} source maps`)
   }
 }

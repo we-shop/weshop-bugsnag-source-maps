@@ -1,6 +1,6 @@
 {
   "name": "@weshop/bugsnag-source-maps",
-  "version": "2.3.2-weshop.1",
+  "version": "2.3.2-weshop.2",
   "description": "A fork of the original CLI and JS library for uploading source maps to Bugsnag",
   "main": "dist/index.js",
   "homepage": "https://github.com/bugsnag/bugsnag-source-maps",

@@ -56,6 +56,7 @@ export default async function uploadNode (argv: string[], opts: Record<string, u
         detectAppVersion: nodeOpts.detectAppVersion,
         codeBundleId: nodeOpts.codeBundleId,
         idleTimeout: nodeOpts.idleTimeout,
+        concurrency: nodeOpts.concurrency,
         logger
       })
     }

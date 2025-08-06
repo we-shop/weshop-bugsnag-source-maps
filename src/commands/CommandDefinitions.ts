@@ -6,5 +6,6 @@ export const commonCommandDefs = [
   { name: 'endpoint', type: String, description: 'customize the endpoint for Bugsnag On-Premise' },
   { name: 'quiet', type: Boolean, description: 'less verbose logging' },
   { name: 'code-bundle-id', type: String },
-  { name: 'idle-timeout', type: Number, description: 'idle timeout for HTTP requests in minutes' }
+  { name: 'idle-timeout', type: Number, description: 'idle timeout for HTTP requests in minutes' },
+  { name: 'concurrency', type: Number, description: 'number of parallel uploads for batch operations (defaults to 5)' }
 ]
